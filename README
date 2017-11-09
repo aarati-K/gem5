@@ -1,3 +1,16 @@
+This is a clone of public gem5 git repository at
+https://gem5.googlesource.com/public/gem5. The last SHA from
+the public repository is 344911b885114b8401482679202aaee89fa8b29b.
+
+To build gem5, I'm currently using:
+
+Python-2.7.14
+gcc-5.4.1
+g++-5.4.1
+scons-2.5.1
+
+============== Original README from the public repo =================
+
 This is the gem5 simulator.
 
 The main website can be found at http://www.gem5.org
