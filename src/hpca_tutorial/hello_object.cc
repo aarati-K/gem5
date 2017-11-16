@@ -2,13 +2,24 @@
 
 #include "debug/Hello.hh"
 
-HelloObject::HelloObject(HelloObjectParams *params) : SimObject(params)
+HelloObject::HelloObject(HelloObjectParams *params) :
+    SimObject(params), event(*this)
 {
-    DPRINTF(Hello, "hello world from sim objecti %d\n", 10);
+    DPRINTF(Hello, "hello world from sim object %d\n", 10);
 }
 
 HelloObject *
 HelloObjectParams::create()
 {
     return new HelloObject(this);
+}
+
+void HelloObject::processEvent()
+{
+    DPRINTF(Hello, "Hello world! Processing the event\n");
+}
+
+void HelloObject::startup()
+{
+    schedule(event, 100);
 }
