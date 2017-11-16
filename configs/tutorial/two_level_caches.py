@@ -1,0 +1,54 @@
+import m5
+from m5.objects import *
+from caches import *
+
+system = System()
+
+# Assign system clock
+system.clk_domain = SrcClockDomain()
+system.clk_domain.clock = "1GHz"
+
+# We don't care about power right now
+system.clk_domain.voltage_domain = VoltageDomain()
+
+system.mem_mode = 'timing'
+system.mem_ranges = [AddrRange('512MB')]
+
+system.cpu = TimingSimpleCPU()
+system.cpu.icache = L1ICache()
+system.cpu.dcache = L1DCache()
+
+system.cpu.icache.connectCPU(system.cpu)
+system.cpu.dcache.connectCPU(system.cpu)
+
+system.l2bus = L2XBar()
+system.cpu.icache.connectBus(system.l2bus)
+system.cpu.dcache.connectBus(system.l2bus)
+
+system.l2cache = L2Cache()
+system.membus = SystemXBar()
+system.l2cache.connectCPUSideBus(system.l2bus)
+system.l2cache.connectMemSideBus(system.membus)
+
+system.cpu.createInterruptController()
+system.cpu.interrupts[0].pio = system.membus.master
+system.cpu.interrupts[0].int_master = system.membus.slave
+system.cpu.interrupts[0].int_slave = system.membus.master
+
+system.system_port = system.membus.slave
+
+system.mem_ctrl = DDR3_1600_x64()
+system.mem_ctrl.range = system.mem_ranges[0]
+system.mem_ctrl.port = system.membus.master
+
+process = LiveProcess()
+process.cmd = ['tests/test-progs/hello/bin/x86/linux/hello']
+system.cpu.workload = process
+system.cpu.createThreads()
+
+root = Root(full_system = False, system = system)
+m5.instantiate()
+print "Beginning simulation! @ tick %i" % (m5.curTick())
+exit_event = m5.simulate()
+
+print 'Exiting @ tick %i because %s' % (m5.curTick(), exit_event.getCause())
