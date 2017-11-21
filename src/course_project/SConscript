@@ -1,0 +1,6 @@
+Import('*')
+
+Source("d2d_packet.cc")
+Source("d2d_request.cc")
+
+DebugFlag("D2D")
