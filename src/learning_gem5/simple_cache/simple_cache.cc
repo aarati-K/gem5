@@ -121,6 +121,7 @@ bool
 SimpleCache::CPUSidePort::recvTimingReq(PacketPtr pkt)
 {
     DPRINTF(SimpleCache, "Got request %s\n", pkt->print());
+    DPRINTF(SimpleCache, "Way number: %d\n", pkt->req->getCacheWayNo());
 
     if (blockedPacket || needRetry) {
         // The cache may not be able to send a reply if this is blocked

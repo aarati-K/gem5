@@ -82,6 +82,7 @@ namespace ContextSwitchTaskId {
 class Request;
 
 typedef Request* RequestPtr;
+typedef uint8_t CacheWay;
 typedef uint16_t MasterID;
 
 class Request
@@ -306,6 +307,12 @@ class Request
      */
     MasterID _masterId;
 
+    /**
+    * Optional cache way number set during TLB access
+    * Function translateTiming
+    */
+    CacheWay _wayNo;
+
     /** Flag structure for the request. */
     Flags _flags;
 
@@ -358,7 +365,7 @@ class Request
      *  constructor.)
      */
     Request()
-        : _paddr(0), _size(0), _masterId(invldMasterId), _time(0),
+        : _paddr(0), _size(0), _masterId(invldMasterId), _wayNo(0), _time(0),
           _taskId(ContextSwitchTaskId::Unknown), _asid(0), _vaddr(0),
           _extraData(0), _contextId(0), _pc(0),
           _reqInstSeqNum(0), atomicOpFunctor(nullptr), translateDelta(0),
@@ -367,7 +374,7 @@ class Request
 
     Request(Addr paddr, unsigned size, Flags flags, MasterID mid,
             InstSeqNum seq_num, ContextID cid)
-        : _paddr(0), _size(0), _masterId(invldMasterId), _time(0),
+        : _paddr(0), _size(0), _masterId(invldMasterId), _wayNo(0), _time(0),
           _taskId(ContextSwitchTaskId::Unknown), _asid(0), _vaddr(0),
           _extraData(0), _contextId(0), _pc(0),
           _reqInstSeqNum(seq_num), atomicOpFunctor(nullptr), translateDelta(0),
@@ -384,7 +391,7 @@ class Request
      * These fields are adequate to perform a request.
      */
     Request(Addr paddr, unsigned size, Flags flags, MasterID mid)
-        : _paddr(0), _size(0), _masterId(invldMasterId), _time(0),
+        : _paddr(0), _size(0), _masterId(invldMasterId), _wayNo(0), _time(0),
           _taskId(ContextSwitchTaskId::Unknown), _asid(0), _vaddr(0),
           _extraData(0), _contextId(0), _pc(0),
           _reqInstSeqNum(0), atomicOpFunctor(nullptr), translateDelta(0),
@@ -394,7 +401,7 @@ class Request
     }
 
     Request(Addr paddr, unsigned size, Flags flags, MasterID mid, Tick time)
-        : _paddr(0), _size(0), _masterId(invldMasterId), _time(0),
+        : _paddr(0), _size(0), _masterId(invldMasterId), _wayNo(0), _time(0),
           _taskId(ContextSwitchTaskId::Unknown), _asid(0), _vaddr(0),
           _extraData(0), _contextId(0), _pc(0),
           _reqInstSeqNum(0), atomicOpFunctor(nullptr), translateDelta(0),
@@ -405,7 +412,7 @@ class Request
 
     Request(Addr paddr, unsigned size, Flags flags, MasterID mid, Tick time,
             Addr pc)
-        : _paddr(0), _size(0), _masterId(invldMasterId), _time(0),
+        : _paddr(0), _size(0), _masterId(invldMasterId), _wayNo(0), _time(0),
           _taskId(ContextSwitchTaskId::Unknown), _asid(0), _vaddr(0),
           _extraData(0), _contextId(0), _pc(pc),
           _reqInstSeqNum(0), atomicOpFunctor(nullptr), translateDelta(0),
@@ -417,7 +424,7 @@ class Request
 
     Request(int asid, Addr vaddr, unsigned size, Flags flags, MasterID mid,
             Addr pc, ContextID cid)
-        : _paddr(0), _size(0), _masterId(invldMasterId), _time(0),
+        : _paddr(0), _size(0), _masterId(invldMasterId), _wayNo(0), _time(0),
           _taskId(ContextSwitchTaskId::Unknown), _asid(0), _vaddr(0),
           _extraData(0), _contextId(0), _pc(0),
           _reqInstSeqNum(0), atomicOpFunctor(nullptr), translateDelta(0),
@@ -429,7 +436,7 @@ class Request
 
     Request(int asid, Addr vaddr, unsigned size, Flags flags, MasterID mid,
             Addr pc, ContextID cid, AtomicOpFunctor *atomic_op)
-        : atomicOpFunctor(atomic_op)
+        : _wayNo(0), atomicOpFunctor(atomic_op)
     {
         setVirt(asid, vaddr, size, flags, mid, pc);
         setContext(cid);
@@ -491,6 +498,16 @@ class Request
     }
 
     /**
+    * Set the cache way number
+    */
+    void
+    setCacheWayNo(CacheWay wayNo)
+    {
+        _wayNo = wayNo;
+
+    }
+
+    /**
      * Generate two requests as if this request had been split into two
      * pieces. The original request can't have been translated already.
      */
@@ -520,6 +537,12 @@ class Request
     {
         assert(privateFlags.isSet(VALID_PADDR));
         return _paddr;
+    }
+
+    CacheWay
+    getCacheWayNo() const
+    {
+        return _wayNo;
     }
 
     /**
